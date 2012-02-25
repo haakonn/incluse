@@ -1,0 +1,15 @@
+Incluse is a library to test if a candidate path is
+covered/included/accepted by a given policy for inclusion and
+exclusion in a hierarchical namespace system.
+
+The most typical application is in filesystems: Your application
+operates on files conforming to given rules for which files should be
+considered and which should not. Think rsync. Incluse can do the
+matching for you.
+
+Incluse supports any combination of simple named nodes, wildcards that
+match any single node, and recursive wildcards that non-greedily
+matches multiple nodes.
+
+Incluse is extensible in its format support. A sample format is
+included for filesystem path policies.
