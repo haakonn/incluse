@@ -6,6 +6,8 @@ class Policy(tree: Seq[PolicyNode] = Nil) {
 
   def matches(in: Seq[String]) = matchPolicy(tree, in).getOrElse(false)
 
+  def union(other: Seq[PolicyNode]) = merge(tree, other)
+  
   private def visitAll[A](f: (PolicyNode, Seq[PolicyNode]) => A) =
     tree map(visit(_, Nil, f)) flatten
 
@@ -81,31 +83,35 @@ object Policy {
     case (Some(ab), Some(bb)) => Some(ab || bb) // true wins over false when conflict
   }
 
-  def merge(n1: Seq[PolicyNode], n2: Seq[PolicyNode]): Seq[PolicyNode] = {
+  /**
+   * Merges two policy trees.
+   */
+  def merge(n1: Seq[PolicyNode], n2: Seq[PolicyNode]): Seq[PolicyNode] = (n1, n2) match {
     // Strategy:
     // for each in l:
     //   if same name exists in s, set l.children = merge(l.children, s.children)
     // for each in s:
-    //   if some name does NOT exist in l, add s to l
-    (n1, n2) match {
-      case (Nil, Nil) => Nil
-      case (x, Nil) => x
-      case (Nil, x) => x
-      case (x, y) => {
-        val (l, s) = if (x.length > y.length) (x, y) else (y, x)
-        val lMerged = l.map(lnode => findSame(s, lnode) match {
-          case Some(n) => {
-            val accept = or(lnode.accept, n.accept)
-            val children = merge(lnode.children, n.children)
-            lnode.cp(children, accept)
-          }
-          case None => lnode
-        })
-        s.foldLeft(lMerged)((acc, n) => if (findSame(acc, n).isDefined) acc else n +: acc)
-      }
+    //   if same name does NOT exist in l, add s to l
+    case (Nil, Nil) => Nil
+    case (x, Nil) => x
+    case (Nil, x) => x
+    case (x, y) => {
+      val (l, s) = if (x.length > y.length) (x, y) else (y, x)
+      val lMerged = l.map(lnode => findSame(s, lnode) match {
+        case Some(n) => {
+          val accept = or(lnode.accept, n.accept)
+          val children = merge(lnode.children, n.children)
+          lnode.cp(children, accept)
+        }
+        case None => lnode
+      })
+      s.foldLeft(lMerged)((acc, n) => if (findSame(acc, n).isDefined) acc else n +: acc)
     }
   }
   
+  /**
+   * Merges a PolicyNode into a node tree.
+   */
   def merge(n: Seq[PolicyNode], p: PolicyNode): Seq[PolicyNode] = merge(n, Seq(p))
       
 }
