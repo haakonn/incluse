@@ -11,13 +11,7 @@ class Policy(tree: Seq[PolicyNode] = Nil) {
   private def visitAll[A](f: (PolicyNode, Seq[PolicyNode]) => A) =
     tree map(visit(_, Nil, f)) flatten
 
-  override def toString = {
-    def handle(node: PolicyNode, path: Seq[PolicyNode]) = {
-      val p = (path mkString ".") + "." + node
-      p + "\n"
-    }
-    visitAll(handle) mkString "\n"
-  }
+  override def toString = tree toString
 
 }
 
