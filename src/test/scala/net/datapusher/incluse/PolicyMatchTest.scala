@@ -7,8 +7,8 @@ import org.scalatest.FunSuite
 @RunWith(classOf[JUnitRunner])
 class PolicyMatchTest extends FunSuite {
 
-  def path(p: String) = p split("/") toList
-
+  implicit def path(p: String) = p split("/") toList
+  
   val pathAbcd = path("a/b/c/d")
 
   /**
@@ -37,11 +37,11 @@ class PolicyMatchTest extends FunSuite {
   }
 
   test("Explicitly included despite neighbouring non-recursive exclusive wildcard") {
-    assert(samplePolicy matches path("tmp/backup/important"))
+    assert(samplePolicy matches "tmp/backup/important")
   }
 
   test("Explicitly excluded") {
-    assert(!(samplePolicy matches path("var/cache")))
+    assert(!(samplePolicy matches "var/cache"))
   }
 
   test("Implicitly included with straight match by recursive wildcard") {
@@ -49,15 +49,15 @@ class PolicyMatchTest extends FunSuite {
   }
 
   test("Implicitly included with backtracking involved") {
-    assert(samplePolicy matches path("tmp/backup/other/stuff"))
+    assert(samplePolicy matches "tmp/backup/other/stuff")
   }
 
   test("Implicitly excluded with straight match by non-recursive wildcard") {
-    assert(!(samplePolicy matches path("tmp/backup/nono")))
+    assert(!(samplePolicy matches "tmp/backup/nono"))
   }
 
   test("Explicitly excluded with straight match following recursive inclusive wildcard") {
-    assert(!(samplePolicy matches path("many/nodes/will/match/until/foo.txt")))
+    assert(!(samplePolicy matches "many/nodes/will/match/until/foo.txt"))
   }
   
 }
