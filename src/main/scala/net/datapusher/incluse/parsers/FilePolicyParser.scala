@@ -10,7 +10,7 @@ import net.datapusher.incluse._
  * immediately followed by the path in question. A * will match
  * any single directory, while ** will match recursively.
  */
-object FilePolicyParser extends PolicyParser {
+class FilePolicyParser extends PolicyParser {
   
   def parse(in: Source) = {
     val lines = in.getLines
