@@ -17,8 +17,13 @@ class Policy(tree: Seq[PolicyNode] = Nil) {
 
 object Policy {
 
+  /** Matches a path against a policy.
+    * A return value of Some(true) means the path was included.
+    * Some(false) means it was excluded. A value of None will never be the returned,
+    * but is used internally to guide recursion.
+    */
   private def matchPolicy(policy: Seq[PolicyNode], in: Seq[String]): Option[Boolean] = {
-    findClosest(policy, in.head) match {
+    def matchClosest(policy: Seq[PolicyNode], in: Seq[String], c: Option[PolicyNode]): Option[Boolean] = c match {
       case Some(closest) =>
         val tail = in.tail
         accept(closest, in) match {
@@ -26,8 +31,8 @@ object Policy {
             closest match {
               case _: RecWild =>
                 findClosest(closest.children, tail.head) match { // peak ahead
-                  case None => matchPolicy(policy, tail) // repeat RecWild match
-                  case _ => matchPolicy(closest.children, tail) // something matching next step, stop RecWild
+                  case None => matchClosest(policy, tail, c) // repeat RecWild match
+                  case x => matchClosest(closest.children, tail, x) // something matching next step, stop RecWild
                 }
               case _ =>
                 matchPolicy(closest.children, tail) match {
@@ -39,12 +44,13 @@ object Policy {
         }
       case None => None
     }
+    matchClosest(policy, in, findClosest(policy, in.head))
   }
 
   private def accept(node: PolicyNode, in: Seq[String]): Option[Boolean] = {
     if (in.length == 1) {
       node match {
-        case Named(name, _, a) if name == in(0) => a
+        case Named(name, _, a) if name == in.head => a
         case Named(name, _, a) => Some(false)
         case Wild(_, a) => a
         case RecWild(_, a) => a
