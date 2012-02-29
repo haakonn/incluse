@@ -15,7 +15,7 @@ class FilePolicyParser extends PolicyParser {
   def parse(in: Source) = {
     val lines = in.getLines
     val tree = lines.foldLeft(Seq[PolicyNode]())((acc, line) => Policy.merge(acc, parseLine(line)))
-    new Policy(tree)
+    Policy(tree)
   }
   
   def parseLine(line: String): PolicyNode = {

@@ -21,18 +21,18 @@ class PolicyMatchTest extends FunSuite {
    * -/var/cache
    * </pre>
    */
-  val samplePolicy = new Policy(List(
+  val samplePolicy = Policy(List(
       Named("var",List(Named("cache",List(),Some(false))),None),
       RecWild(List(Named("foo.txt",List(),Some(false))),Some(true)),
       Named("tmp",List(Named("backup",List(Named("important",List(),Some(true)), Wild(List(),Some(false))),None)),None)))
   
   test("All-inclusive policy matches") {
-    val allInclusive = new Policy(Seq(RecWild(accept=Some(true))))
+    val allInclusive = Policy(Seq(RecWild(accept=Some(true))))
     assert(allInclusive matches pathAbcd)
   }
 
   test("All-exclusive policy does not match") {
-    val allExclusive = new Policy(Seq(RecWild(accept=Some(false))))
+    val allExclusive = Policy(Seq(RecWild(accept=Some(false))))
     assert(!(allExclusive matches pathAbcd))
   }
 
