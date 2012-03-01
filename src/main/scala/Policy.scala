@@ -4,7 +4,7 @@ class Policy private (tree: Seq[PolicyNode] = Nil) {
 
   import Policy._
 
-  def matches(in: Seq[String]) = matchPolicy(tree, in).getOrElse(false)
+  def matches(in: Seq[String]) = matchPolicy(tree, in).get
 
   def union(other: Seq[PolicyNode]) = merge(tree, other)
   
