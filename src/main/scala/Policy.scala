@@ -1,12 +1,12 @@
 package net.datapusher.incluse
 
-class Policy private (tree: Seq[PolicyNode] = Nil) {
+class Policy private (private val tree: Seq[PolicyNode] = Nil) {
 
   import Policy._
 
   def matches(in: Seq[String]) = matchPolicy(tree, in).get
 
-  def union(other: Seq[PolicyNode]) = merge(tree, other)
+  def union(other: Policy) = merge(tree, other.tree)
   
   private def visitAll[A](f: (PolicyNode, Seq[PolicyNode]) => A) =
     tree map(visit(_, Nil, f)) flatten
