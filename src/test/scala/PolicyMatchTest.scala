@@ -1,10 +1,8 @@
 package net.datapusher.incluse
 
-import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.FunSuite
 
-@RunWith(classOf[JUnitRunner])
 class PolicyMatchTest extends FunSuite {
 
   implicit def path(p: String) = p split("/") toList
