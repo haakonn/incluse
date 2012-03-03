@@ -1,6 +1,5 @@
 package net.datapusher.incluse
 
-import org.scalatest.junit.JUnitRunner
 import org.scalatest.FunSuite
 
 class PolicyMatchTest extends FunSuite {
