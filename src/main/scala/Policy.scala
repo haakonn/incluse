@@ -13,12 +13,13 @@ class Policy private (private val tree: Set[PolicyNode] = Set.empty) {
 
   override def toString = tree toString
   
-  override def equals(that: Any) = { println("!!!!"); that match {
+  override def equals(that: Any) = that match {
     case p: Policy => tree == p.tree
     case _ => false
-  }}
+  }
 
   override def hashCode = tree.hashCode()
+
 }
 
 object Policy {
