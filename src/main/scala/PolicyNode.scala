@@ -35,5 +35,5 @@ case class Named(
     case node: Named => name == node.name && super.equals(that)
     case _ => false
   }
-  override def hashCode() = name.hashCode() + super.hashCode()
+  override def hashCode = name.hashCode() + super.hashCode()
 }
