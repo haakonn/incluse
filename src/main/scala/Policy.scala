@@ -6,13 +6,19 @@ class Policy private (private val tree: Set[PolicyNode] = Set.empty) {
 
   def matches(in: Seq[String]) = matchPolicy(tree, in).get
 
-  def union(other: Policy) = merge(tree, other.tree)
+  def union(other: Policy) = new Policy(merge(tree, other.tree))
   
   private def visitAll[A](f: (PolicyNode, Seq[PolicyNode]) => A) =
     tree map(visit(_, Nil, f)) flatten
 
   override def toString = tree toString
+  
+  override def equals(that: Any) = { println("!!!!"); that match {
+    case p: Policy => tree == p.tree
+    case _ => false
+  }}
 
+  override def hashCode = tree.hashCode()
 }
 
 object Policy {
