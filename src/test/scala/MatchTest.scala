@@ -2,7 +2,7 @@ package net.datapusher.incluse
 
 import org.scalatest.FunSuite
 
-class PolicyMatchTest extends FunSuite {
+class MatchTest extends FunSuite {
 
   implicit def path(p: String) = p split("/") toList
 
