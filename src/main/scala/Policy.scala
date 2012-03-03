@@ -1,6 +1,6 @@
 package net.datapusher.incluse
 
-class Policy private (private val tree: Seq[PolicyNode] = Nil) {
+class Policy private (private val tree: Set[PolicyNode] = Set.empty) {
 
   import Policy._
 
@@ -17,15 +17,15 @@ class Policy private (private val tree: Seq[PolicyNode] = Nil) {
 
 object Policy {
   
-  def apply(tree: Seq[PolicyNode] = Nil) = new Policy(tree)
+  def apply(tree: Set[PolicyNode] = Set.empty) = new Policy(tree)
 
   /** Matches a path against a policy.
-    * A return value of Some(true) means the path was included.
-    * Some(false) means it was excluded. A value of None will never be the returned,
-    * but is used internally to guide recursion.
-    */
-  private def matchPolicy(policy: Seq[PolicyNode], in: Seq[String]): Option[Boolean] = {
-    def matchClosest(policy: Seq[PolicyNode], in: Seq[String], c: Option[PolicyNode]): Option[Boolean] = c match {
+   *  A return value of Some(true) means the path was included.
+   *  Some(false) means it was excluded. A value of None will never be the returned,
+   *  but is used internally to guide recursion.
+   */
+  private def matchPolicy(policy: Set[PolicyNode], in: Seq[String]): Option[Boolean] = {
+    def matchClosest(policy: Set[PolicyNode], in: Seq[String], c: Option[PolicyNode]): Option[Boolean] = c match {
       case Some(closest) =>
         val tail = in.tail
         accept(closest, in) match {
@@ -62,7 +62,7 @@ object Policy {
     }
   }
   
-  private def findClosest(nodes: Seq[PolicyNode], name: String): Option[PolicyNode] = {
+  private def findClosest(nodes: Set[PolicyNode], name: String): Option[PolicyNode] = {
     nodes.collectFirst { case x: Named if x.name == name => x }
     .orElse(nodes.collectFirst { case e: Wild => e })
     .orElse(nodes.collectFirst { case e: RecWild => e })
@@ -72,7 +72,7 @@ object Policy {
       f: ((PolicyNode, Seq[PolicyNode]) => A)): List[A] =
       f(node, path) :: node.children.foldLeft(List[A]())((acc, b) => acc ++ visit(b, node :: path, f))
 
-  private def findSame(nodes: Seq[PolicyNode], node: PolicyNode) = node match {
+  private def findSame(nodes: Traversable[PolicyNode], node: PolicyNode) = node match {
     case Named(name, _, _) => { nodes find { case Named(nname, _, _) => name == nname; case _ => false } }
     case _: Wild => { nodes find { case _: Wild => true; case _ => false } }
     case _: RecWild => { nodes find { case _: RecWild => true; case _ => false } }
@@ -84,21 +84,20 @@ object Policy {
     case (None, Some(_)) => b
     case (Some(ab), Some(bb)) => Some(ab || bb) // true wins over false when conflict
   }
-
-  /**
-   * Merges two policy trees.
+  
+  /** Merges two policy trees.
    */
-  def merge(n1: Seq[PolicyNode], n2: Seq[PolicyNode]): Seq[PolicyNode] = (n1, n2) match {
+  def merge(n1: Set[PolicyNode], n2: Set[PolicyNode]): Set[PolicyNode] = {
     // Strategy:
     // for each in l:
     //   if same name exists in s, set l.children = merge(l.children, s.children)
     // for each in s:
     //   if same name does NOT exist in l, add s to l
-    case (Nil, Nil) => Nil
-    case (x, Nil) => x
-    case (Nil, x) => x
-    case (x, y) => {
-      val (l, s) = if (x.length > y.length) (x, y) else (y, x)
+    if (n1 isEmpty) { // if one of them is empty, pick the one that's not
+      if (n2 isEmpty) Set.empty else n2
+    } else if (n2 isEmpty) n2 else {
+      // both are non-empty, an actual merge has to be done:
+      val (l, s) = if (n1.size > n2.size) (n1, n2) else (n2, n1)
       val lMerged = l.map(lnode => findSame(s, lnode) match {
         case Some(n) => {
           val accept = or(lnode.accept, n.accept)
@@ -107,13 +106,12 @@ object Policy {
         }
         case None => lnode
       })
-      s.foldLeft(lMerged)((acc, n) => if (findSame(acc, n).isDefined) acc else n +: acc)
+      s.foldLeft(lMerged)((acc, n) => if (findSame(acc, n).isDefined) acc else acc + n)
     }
   }
-  
-  /**
-   * Merges a PolicyNode into a node tree.
+
+  /** Merges a PolicyNode into a node tree.
    */
-  def merge(n: Seq[PolicyNode], p: PolicyNode): Seq[PolicyNode] = merge(n, Seq(p))
+  def merge(n: Set[PolicyNode], p: PolicyNode): Set[PolicyNode] = merge(n, Set(p))
       
 }
