@@ -11,7 +11,7 @@ abstract sealed class PolicyNode(
       children == node.children
     case _ => false
   }
-  override def hashCode = accept.hashCode() + children.hashCode()
+  override def hashCode = getClass.hashCode() + accept.hashCode() + children.hashCode()
 }
 
 case class Wild(
