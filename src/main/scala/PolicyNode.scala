@@ -5,7 +5,10 @@ abstract sealed class PolicyNode(
     val accept: Option[Boolean]) {
   def cp(children: Set[PolicyNode], accept: Option[Boolean]): PolicyNode
   override def equals(that: Any) = that match {
-    case node: PolicyNode => accept == node.accept && children == node.children
+    case node: PolicyNode =>
+      getClass == node.getClass &&
+      accept == node.accept &&
+      children == node.children
     case _ => false
   }
   override def hashCode = accept.hashCode() + children.hashCode()
