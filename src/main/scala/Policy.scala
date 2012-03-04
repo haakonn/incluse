@@ -92,8 +92,7 @@ object Policy {
     case (Some(ab), Some(bb)) => Some(ab || bb) // true wins over false when conflict
   }
   
-  /** Merges two policy trees.
-   */
+  /** Merges two policy trees. */
   def merge(n1: Set[PolicyNode], n2: Set[PolicyNode]): Set[PolicyNode] = {
     // Strategy:
     // for each in l:
@@ -113,12 +112,26 @@ object Policy {
         }
         case None => lnode
       })
-      lMerged union s.filter(!findSame(lMerged, _).isDefined)
+      normalize(lMerged union s.filterNot(findSame(lMerged, _).isDefined))
     }
   }
 
-  /** Merges a PolicyNode into a node tree.
-   */
+  /** Merges a PolicyNode into a node tree. */
   def merge(n: Set[PolicyNode], p: PolicyNode): Set[PolicyNode] = merge(n, Set(p))
-      
+
+  /** Remove redundancies, put into minimal form. */
+  private def normalize(n: Set[PolicyNode]): Set[PolicyNode] = {
+    val wild = n.collectFirst { case e: Wild => e }
+    val nf = n.filter(node =>
+      if (node.accept.isDefined) {
+        // a Wild and something else X of same polarity, cancels out X
+        if (wild.isDefined && wild.get != node) {
+          !(wild.get.accept == node.accept)
+        } else true
+      } else true
+    )
+    nf.map(x => x.cp(normalize(x.children), x.accept))
+  }
+
+
 }
