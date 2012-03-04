@@ -14,14 +14,18 @@ class PolicyNodeTest extends FunSuite {
     assert(n2 == n1)
   }
 
-  test("Rec and RecWild not the same") {
-    assertUnequal(Wild(), RecWild())
-  }
-  
-  test("Simple Wild equality") {
+  test("Simple equalities") {
     assertEqual(Wild(), Wild())
+    assertEqual(RecWild(), RecWild())
+    assertEqual(Named("a"), Named("a"))
   }
-  
+
+  test("Simple inequalities") {
+    assertUnequal(Wild(), RecWild())
+    assertUnequal(Named("a"), RecWild())
+    assertUnequal(Named("a"), Wild())
+  }
+
   test("Wild not equal when polarities oppose") {
     assertUnequal(Wild(accept=Some(true)), Wild(accept=Some(false)))
   }
