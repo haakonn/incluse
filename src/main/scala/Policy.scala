@@ -113,7 +113,7 @@ object Policy {
         }
         case None => lnode
       })
-      s.foldLeft(lMerged)((acc, n) => if (findSame(acc, n).isDefined) acc else acc + n)
+      lMerged union s.filter(!findSame(lMerged, _).isDefined)
     }
   }
 
