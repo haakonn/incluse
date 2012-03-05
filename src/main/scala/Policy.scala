@@ -136,7 +136,7 @@ object Policy {
       } else true
     )
     // You tolerated that, so now your children will be next:
-    nf.map(x => x.cp(normalize(x.children), x.accept))
+    nf.map(x => x.cp(normalize(x.children)))
   }
 
 }
