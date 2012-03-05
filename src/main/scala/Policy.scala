@@ -121,9 +121,11 @@ object Policy {
 
   /** Remove redundancies, put into minimal form. */
   private def normalize(n: Set[PolicyNode]): Set[PolicyNode] = {
+    // First extract polarities of any wildcards present at this level:
     val wildAccept = (n.collectFirst { case e: Wild => e.accept }).getOrElse(None)
     val recWildAccept = (n.collectFirst { case e: RecWild => e.accept }).getOrElse(None)
     val eitherWildAccept = recWildAccept.orElse(wildAccept.orElse(None))
+    // Now use these to filter out superfluous nodes:
     val nf = n.filter(node =>
       if (node.accept.isDefined) {
         node match {
@@ -133,7 +135,8 @@ object Policy {
         }
       } else true
     )
-    nf.map(x => x.cp(normalize(x.children), x.accept)) // recursive step
+    // You tolerated that, so now your children will be next:
+    nf.map(x => x.cp(normalize(x.children), x.accept))
   }
 
 }
