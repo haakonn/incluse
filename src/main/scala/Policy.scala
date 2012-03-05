@@ -121,17 +121,19 @@ object Policy {
 
   /** Remove redundancies, put into minimal form. */
   private def normalize(n: Set[PolicyNode]): Set[PolicyNode] = {
-    val wild = n.collectFirst { case e: Wild => e }
+    val wildAccept = (n.collectFirst { case e: Wild => e.accept }).getOrElse(None)
+    val recWildAccept = (n.collectFirst { case e: RecWild => e.accept }).getOrElse(None)
+    val eitherWildAccept = recWildAccept.orElse(wildAccept.orElse(None))
     val nf = n.filter(node =>
       if (node.accept.isDefined) {
-        // a Wild and something else X of same polarity, cancels out X
-        if (wild.isDefined && wild.get != node) {
-          !(wild.get.accept == node.accept)
-        } else true
+        node match {
+          case _: Named => node.accept != eitherWildAccept // Only keep if no wild excludes it
+          case _: Wild => !recWildAccept.isDefined // RecWild > Wild regardless of polarities
+          case _: RecWild => true // In fact, RecWild trumps everything
+        }
       } else true
     )
-    nf.map(x => x.cp(normalize(x.children), x.accept))
+    nf.map(x => x.cp(normalize(x.children), x.accept)) // recursive step
   }
-
 
 }

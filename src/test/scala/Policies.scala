@@ -4,6 +4,13 @@ object Policies {
   val allInclusive = Policy(Set(RecWild(accept=Some(true))))
   val allExclusive = Policy(Set(RecWild(accept=Some(false))))
   
+  val allInclNonRec = Policy(Set(Wild(accept=Some(true))))
+  val allExclNonRec = Policy(Set(Wild(accept=Some(false))))
+  
+  val smallPolicy = Policy(Set(Named("a", accept=Some(true))))
+  val smallPolicy2 = Policy(Set(Named("b", accept=Some(true))))
+
+  
   /** Human-readable version of this policy (% is wildcard in this case):
     * <pre>
     * +/%%
