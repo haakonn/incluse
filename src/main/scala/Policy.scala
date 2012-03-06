@@ -101,7 +101,7 @@ object Policy {
     //   if same name does NOT exist in l, add s to l
     if (n1 isEmpty) { // if one of them is empty, pick the one that's not
       if (n2 isEmpty) Set.empty else n2
-    } else if (n2 isEmpty) n2 else {
+    } else if (n2 isEmpty) n1 else {
       // both are non-empty, an actual merge has to be done:
       val (l, s) = if (n1.size > n2.size) (n1, n2) else (n2, n1)
       val lMerged = l.map(lnode => findSame(s, lnode) match {

@@ -28,6 +28,10 @@ class UnionTest extends FunSuite {
     assert(self === policy)
   }
 
+  test("Union with empty policy") {
+    assert((Policies.samplePolicy union Policy()) === Policies.samplePolicy)
+  }
+  
   test("Union of two unequals") {
     val union = Policies.smallPolicy union Policies.smallPolicy2
     val expected = Policy(Set(Named("a", accept=Some(true)), Named("b", accept=Some(true))))
