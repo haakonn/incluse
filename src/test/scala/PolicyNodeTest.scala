@@ -4,12 +4,12 @@ import org.scalatest.FunSuite
 
 class PolicyNodeTest extends FunSuite {
 
-  private def assertUnequal(n1: PolicyNode, n2: PolicyNode) = {
+  private def assertUnequal(n1: PolicyNode[_], n2: PolicyNode[_]) = {
     assert(!(n1 == n2))
     assert(!(n2 == n1))
   }
 
-  private def assertEqual(n1: PolicyNode, n2: PolicyNode) = {
+  private def assertEqual(n1: PolicyNode[_], n2: PolicyNode[_]) = {
     assert(n1 == n2)
     assert(n2 == n1)
   }
@@ -31,27 +31,27 @@ class PolicyNodeTest extends FunSuite {
   }
 
   test("Wild not equal when children differ") {
-    assertUnequal(Wild(), Wild(Set(Named("a"))))
+    assertUnequal(Wild(), Wild(NodeSet(Set(Named("a")))))
   }
 
   test("Wild equal when children equal") {
-    assertEqual(Wild(Set(Named("a"))), Wild(Set(Named("a"))))
+    assertEqual(Wild(NodeSet(Set(Named("a")))), Wild(NodeSet(Set(Named("a")))))
   }
   
   test("Named equal when names and children are equal") {
-    assertEqual(Named("a", Set(Wild())), Named("a", Set(Wild())))
+    assertEqual(Named("a", NodeSet(wild=Some(Wild()))), Named("a", NodeSet(wild=Some(Wild()))))
   }
   
   test("Named unequal when names and children are equal but polarities oppose") {
-    assertUnequal(Named("a", Set(Wild(accept=Some(true)))), Named("a", Set(Wild(accept=Some(false)))))
+    assertUnequal(Named("a", NodeSet(wild=Some(Wild(accept=Some(true))))), Named("a", NodeSet(wild=Some(Wild(accept=Some(false))))))
   }
 
   test("Named unequal when names and children are equal one node is nonpolar") {
-    assertUnequal(Named("a", Set(Wild(accept=Some(true)))), Named("a", Set(Wild())))
+    assertUnequal(Named("a", NodeSet(wild=Some(Wild(accept=Some(true))))), Named("a", NodeSet(wild=Some(Wild()))))
   }
 
   test("Named equal when names, children and polarities are the same") {
-    assertEqual(Named("a", Set(Wild(accept=Some(true)))), Named("a", Set(Wild(accept=Some(true)))))
+    assertEqual(Named("a", NodeSet(wild=Some(Wild(accept=Some(true))))), Named("a", NodeSet(wild=Some(Wild(accept=Some(true))))))
   }
   
 }

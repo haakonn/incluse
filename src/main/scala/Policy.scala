@@ -1,16 +1,13 @@
 package net.datapusher.incluse
 
-class Policy private (private val tree: Set[PolicyNode] = Set.empty) {
+class Policy private (private val tree: NodeSet = NodeSet()) {
 
   import Policy._
 
   def matches(in: Seq[String]) = matchPolicy(tree, in).get
 
-  def union(other: Policy) = new Policy(merge(tree, other.tree))
+  def union(other: Policy) = new Policy(normalize(merge(tree, other.tree)))
   
-  private def visitAll[A](f: (PolicyNode, Seq[PolicyNode]) => A) =
-    tree map(visit(_, Nil, f)) flatten
-
   override def toString = tree toString
   
   override def equals(that: Any) = that match {
@@ -24,15 +21,15 @@ class Policy private (private val tree: Set[PolicyNode] = Set.empty) {
 
 object Policy {
   
-  def apply(tree: Set[PolicyNode] = Set.empty) = new Policy(tree)
+  def apply(tree: NodeSet = NodeSet()) = new Policy(tree)
 
   /** Matches a path against a policy.
    *  A return value of Some(true) means the path was included.
    *  Some(false) means it was excluded. A value of None will never be the returned,
    *  but is used internally to guide recursion.
    */
-  private def matchPolicy(policy: Set[PolicyNode], in: Seq[String]): Option[Boolean] = {
-    def matchClosest(policy: Set[PolicyNode], in: Seq[String], c: Option[PolicyNode]): Option[Boolean] = c match {
+  private def matchPolicy(policy: NodeSet, in: Seq[String]): Option[Boolean] = {
+    def matchClosest(policy: NodeSet, in: Seq[String], c: Option[PolicyNode[_]]): Option[Boolean] = c match {
       case Some(closest) =>
         val tail = in.tail
         accept(closest, in) match {
@@ -45,7 +42,7 @@ object Policy {
                 }
               case _ =>
                 matchPolicy(closest.children, tail) match {
-                  case None => matchPolicy(policy filterNot (_ == closest), in) // backtrack
+                  case None => matchPolicy(policy - closest, in) // backtrack
                   case b => b
                 }
             }
@@ -56,11 +53,11 @@ object Policy {
     matchClosest(policy, in, findClosest(policy, in.head))
   }
 
-  private def accept(node: PolicyNode, in: Seq[String]): Option[Boolean] = {
+  private def accept(node: PolicyNode[_], in: Seq[String]): Option[Boolean] = {
     if (in.length == 1) {
       node match {
         case Named(name, _, a) if name == in.head => a
-        case Named(name, _, a) => Some(false)
+        case Named(_, _, _) => Some(false)
         case Wild(_, a) => a
         case RecWild(_, a) => a
       }
@@ -68,23 +65,17 @@ object Policy {
       None // Continue matching
     }
   }
-  
-  private def findClosest(nodes: Set[PolicyNode], name: String): Option[PolicyNode] = {
-    nodes.collectFirst { case x: Named if x.name == name => x }
-    .orElse(nodes.collectFirst { case e: Wild => e })
-    .orElse(nodes.collectFirst { case e: RecWild => e })
-  }
-  
-  private def visit[A](node: PolicyNode, path: List[PolicyNode],
-      f: ((PolicyNode, Seq[PolicyNode]) => A)): List[A] =
-      f(node, path) :: node.children.foldLeft(List[A]())((acc, b) => acc ++ visit(b, node :: path, f))
 
-  private def findSame(nodes: Traversable[PolicyNode], node: PolicyNode) = node match {
-    case Named(name, _, _) => { nodes find { case Named(nname, _, _) => name == nname; case _ => false } }
-    case _: Wild => { nodes find { case _: Wild => true; case _ => false } }
-    case _: RecWild => { nodes find { case _: RecWild => true; case _ => false } }
-  }
+  private def findNamed(nodes: Set[Named], name: String): Option[Named] =
+    nodes.collectFirst { case n @ Named(nname, _, _) if name == nname => n }
   
+  private def findClosest(nodes: NodeSet, name: String): Option[PolicyNode[_]] = {
+    val named: Option[PolicyNode[_]] = findNamed(nodes.named, name)
+    named orElse nodes.wild orElse nodes.recWild
+  }
+
+  private def findSame(nodes: Set[Named], node: Named) = findNamed(nodes, node.name)
+
   private def or(a: Option[Boolean], b: Option[Boolean]) = (a, b) match {
     case (None, None) => None
     case (Some(_), None) => a
@@ -93,50 +84,61 @@ object Policy {
   }
   
   /** Merges two policy trees. */
-  def merge(n1: Set[PolicyNode], n2: Set[PolicyNode]): Set[PolicyNode] = {
+  def merge(n1: NodeSet, n2: NodeSet): NodeSet =
     // Strategy:
     // for each in l:
     //   if same name exists in s, set l.children = merge(l.children, s.children)
     // for each in s:
     //   if same name does NOT exist in l, add s to l
-    if (n1 isEmpty) { // if one of them is empty, pick the one that's not
-      if (n2 isEmpty) Set.empty else n2
-    } else if (n2 isEmpty) n1 else {
+    if (n1 isEmpty) n2 // if one of them is empty, pick the one that's not
+    else if (n2 isEmpty) n1 else {
       // both are non-empty, an actual merge has to be done:
-      val (l, s) = if (n1.size > n2.size) (n1, n2) else (n2, n1)
-      val lMerged = l.map(lnode => findSame(s, lnode) match {
-        case Some(n) => {
-          val accept = or(lnode.accept, n.accept)
-          val children = merge(lnode.children, n.children)
-          lnode.cp(children, accept)
-        }
-        case None => lnode
-      })
-      normalize(lMerged union s.filterNot(findSame(lMerged, _).isDefined))
+      val named = merge(n1.named, n2.named)
+      val wild = merge(n1.wild, n2.wild)
+      val recWild = merge(n1.recWild, n2.recWild)
+      NodeSet(named, wild, recWild)
     }
-  }
 
-  /** Merges a PolicyNode into a node tree. */
-  def merge(n: Set[PolicyNode], p: PolicyNode): Set[PolicyNode] = merge(n, Set(p))
+  private def merge(n1: Set[Named], n2: Set[Named]): Set[Named] = {
+    val (l, s) = if (n1.size > n2.size) (n1, n2) else (n2, n1)
+    val lMerged = l.map(lnode => findSame(s, lnode) match {
+      case Some(n) => {
+        val accept = or(lnode.accept, n.accept)
+        val children = merge(lnode.children, n.children)
+        lnode.cp(children, accept)
+      }
+      case None => lnode
+    })
+    lMerged union s.filterNot(findSame(lMerged, _).isDefined)
+  }
+  
+  private def merge[A <: PolicyNode[A]](n1: Option[A], n2: Option[A]) : Option[A] = {
+    if (n1.isDefined) {
+      if (n2.isDefined) {
+        val (w1, w2) = (n1.get, n2.get)
+        val accept = or(w1.accept, w2.accept)
+        Some(w1.cp(merge(w1.children, w2.children), accept))
+      } else n1
+    } else n2
+  }
+  
+  /** Merges a PolicyNode into a node set. */
+  def merge(n: NodeSet, p: PolicyNode[_]): NodeSet = merge(n, NodeSet(p))
 
   /** Remove redundancies, put into minimal form. */
-  private def normalize(n: Set[PolicyNode]): Set[PolicyNode] = {
+  private def normalize(n: NodeSet): NodeSet = {
     // First extract polarities of any wildcards present at this level:
-    val wildAccept = (n.collectFirst { case e: Wild => e.accept }).getOrElse(None)
-    val recWildAccept = (n.collectFirst { case e: RecWild => e.accept }).getOrElse(None)
-    val eitherWildAccept = recWildAccept.orElse(wildAccept.orElse(None))
-    // Now use these to filter out superfluous nodes:
-    val nf = n.filter(node =>
-      if (node.accept.isDefined) {
-        node match {
-          case _: Named => node.accept != eitherWildAccept // Only keep if no wild excludes it
-          case _: Wild => !recWildAccept.isDefined // RecWild > Wild regardless of polarities
-          case _: RecWild => true // In fact, RecWild trumps everything
-        }
-      } else true
-    )
+    val wildAccept = n.wild.flatMap { _.accept }
+    val recWildAccept = n.recWild.flatMap { _.accept }
+    val eitherWildAccept = recWildAccept orElse wildAccept
+    // Now use these to filter out superfluous nodes.
+    // Only keep wild if recursive wild is not defined:
+    val fWild = n.wild.filter(_ => !recWildAccept.isDefined)
+    // Only keep polar named if no wild excludes it:
+    val fNamed = n.named.filter(node => !node.accept.isDefined || node.accept != eitherWildAccept)
     // You tolerated that, so now your children will be next:
-    nf.map(x => x.cp(normalize(x.children)))
+    def r[A <: PolicyNode[A]](n: A) = n.cp(normalize(n.children))
+    NodeSet(fNamed.map(r), fWild.map(r), n.recWild.map(r))
   }
 
 }
