@@ -24,14 +24,29 @@ class UnionTest extends FunSuite {
     assert(p1 === p2)
   }
 
-  test("Self-union") {
-    val policy = Policies.samplePolicy
-    val self = policy union policy
-    assert(self === policy)
+  def selfUnion(p: Policy) = {
+    val self = p union p
+    assert(self === p)
+  }
+  
+  test("Simple self-union") {
+    selfUnion(Policies.smallPolicy)
   }
 
-  test("Union with empty policy") {
-    assert((Policies.samplePolicy union Policy()) === Policies.samplePolicy)
+  test("Complex self-union") {
+    selfUnion(Policies.samplePolicy)
+  }
+
+  def unionWithEmpty(p: Policy) = {
+    assert((p union Policy()) === p)
+  }
+
+  test("Simple union with empty policy") {
+    unionWithEmpty(Policies.smallPolicy)
+  }
+
+  test("Complex union with empty policy") {
+    unionWithEmpty(Policies.samplePolicy)
   }
 
   test("Union of two unequals") {
@@ -68,4 +83,18 @@ class UnionTest extends FunSuite {
     simpleCancelingPolarity(false, Policies.allExclusive)
   }
 
+  private def implicitElimination(accept: Boolean) = {
+    val p = Policy(NodeSet(Set(Named("a", children=NodeSet(Set(Named("b", accept=Some(accept))))))))
+    cancelingPolarity(accept, if (accept) Policies.allInclusive else Policies.allExclusive, p)
+  }
+
+  test("RecWild implicitly eliminates named on positive polarity") {
+    implicitElimination(true)
+  }
+
+  test("RecWild implicitly eliminates named on negative polarity") {
+    implicitElimination(false)
+  }
+
+  
 }

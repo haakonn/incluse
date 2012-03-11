@@ -126,19 +126,23 @@ object Policy {
   def merge(n: NodeSet, p: PolicyNode[_]): NodeSet = merge(n, NodeSet(p))
 
   /** Remove redundancies, put into minimal form. */
-  private def normalize(n: NodeSet): NodeSet = {
-    // First extract polarities of any wildcards present at this level:
+  private def normalize(n: NodeSet, accept: Option[Boolean] = None): NodeSet = {
+    // First extract polarities of any wildcards present:
     val wildAccept = n.wild.flatMap { _.accept }
-    val recWildAccept = n.recWild.flatMap { _.accept }
-    val eitherWildAccept = recWildAccept orElse wildAccept
+    val recAccept = n.recWild.flatMap { _.accept }
+    val inheritAccept = recAccept orElse accept
+    val eitherWildAccept = wildAccept orElse inheritAccept
     // Now use these to filter out superfluous nodes.
-    // Only keep wild if recursive wild is not defined:
-    val fWild = n.wild.filter(_ => !recWildAccept.isDefined)
-    // Only keep polar named if no wild excludes it:
-    val fNamed = n.named.filter(node => !node.accept.isDefined || node.accept != eitherWildAccept)
-    // You tolerated that, so now your children will be next:
-    def r[A <: PolicyNode[A]](n: A) = n.cp(normalize(n.children))
-    NodeSet(fNamed.map(r), fWild.map(r), n.recWild.map(r))
+    def r[A <: PolicyNode[A]](n: A, incl: Boolean) =
+      if (incl) {
+        val rn = n.cp(normalize(n.children, inheritAccept))
+        if (!rn.accept.isDefined && rn.children.isEmpty) None else Some(rn)
+      } else None
+    val rNamed = n.named.flatMap(x => r(x, (!x.accept.isDefined || x.accept != eitherWildAccept)))
+    val rWild = n.wild.flatMap(w =>
+      r(w, !w.accept.isDefined || ((accept.isDefined && accept != w.accept) || !recAccept.isDefined)))
+    val rRecWild = n.recWild.flatMap(x => r(x, true))
+    NodeSet(rNamed, rWild, rRecWild)
   }
 
 }
