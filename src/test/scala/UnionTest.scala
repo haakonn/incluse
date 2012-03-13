@@ -96,5 +96,14 @@ class UnionTest extends FunSuite {
     implicitElimination(false)
   }
 
-  
+  test("Polar RecWild does not explicitly eliminate non-polar Wild") {
+    // p = +a/*/b
+    val p = Policy(NodeSet(Set(Named("a",NodeSet(Set(),Some(Wild(NodeSet(Set(Named("b",NodeSet(Set(),None,None),Some(true))),None,None),None)),None),None)),None,None))
+    // p2 = -a/**
+    val p2 = Policy(NodeSet(Set(Named("a",NodeSet(Set(),None,Some(RecWild(NodeSet(Set(),None,None),Some(false)))),None)),None,None))
+    // expected = p, p2
+    val expected = Policy(NodeSet(Set(Named("a",NodeSet(Set(),Some(Wild(NodeSet(Set(Named("b",NodeSet(Set(),None,None),Some(true))),None,None),None)),Some(RecWild(NodeSet(Set(),None,None),Some(false)))),None)),None,None))
+    assert((p union p2) === expected)
+  }
+
 }
