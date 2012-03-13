@@ -131,14 +131,14 @@ object Policy {
     val wildAccept = n.wild.flatMap { _.accept }
     val recAccept = n.recWild.flatMap { _.accept }
     val inheritAccept = recAccept orElse accept
-    val eitherWildAccept = wildAccept orElse inheritAccept
+    val eitherAccept = wildAccept orElse inheritAccept
     // Now use these to filter out superfluous nodes.
     def r[A <: PolicyNode[A]](n: A, incl: Boolean) =
       if (incl) {
         val rn = n.cp(normalize(n.children, inheritAccept))
         if (!rn.accept.isDefined && rn.children.isEmpty) None else Some(rn)
       } else None
-    val rNamed = n.named.flatMap(x => r(x, (!x.accept.isDefined || x.accept != eitherWildAccept)))
+    val rNamed = n.named.flatMap(x => r(x, (!x.accept.isDefined || x.accept != eitherAccept)))
     val rWild = n.wild.flatMap(w =>
       r(w, !w.accept.isDefined || ((accept.isDefined && accept != w.accept) || !recAccept.isDefined)))
     val rRecWild = n.recWild.flatMap(x => r(x, true))
