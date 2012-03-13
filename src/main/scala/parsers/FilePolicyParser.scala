@@ -14,18 +14,18 @@ class FilePolicyParser extends PolicyParser {
   
   def parse(in: Source) = {
     val lines = in.getLines
-    val tree = lines.foldLeft(NodeSet())((acc, line) => Policy.merge(acc, parseLine(line)))
+    val tree = lines.foldLeft(NodeSet.empty)((set, line) => Policy.merge(set, parseLine(line)))
     Policy(tree)
   }
   
   def parseLine(line: String): PolicyNode[_] = {
-    val parts = line.substring(2).split("/")
+    val parts = line.substring(2).split('/')
     val accept = Some(line(0) == '+')
     parts.foldRight(None: Option[PolicyNode[_]])((value, acc) => {
       val node = parseNode(value)
       acc match {
         case Some(child) => Some(node.cp(node.children + child))
-        case None => Some(node.cp(NodeSet(), accept))
+        case None => Some(node.cp(NodeSet.empty, accept))
       }
     }).get
   }
