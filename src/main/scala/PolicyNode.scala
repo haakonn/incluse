@@ -22,7 +22,8 @@ case class NodeSet(
 }
 
 object NodeSet {
-  def apply(node: PolicyNode[_]): NodeSet = NodeSet() + node
+  val empty = NodeSet()
+  def apply(node: PolicyNode[_]): NodeSet = empty + node
 }
 
 abstract sealed class PolicyNode[V <: PolicyNode[V]](
@@ -40,14 +41,14 @@ abstract sealed class PolicyNode[V <: PolicyNode[V]](
 }
 
 case class Wild(
-    override val children: NodeSet = NodeSet(),
+    override val children: NodeSet = NodeSet.empty,
     override val accept: Option[Boolean] = None)
     extends PolicyNode[Wild](children, accept) {
   override def cp(c: NodeSet, accept: Option[Boolean] = accept) = copy(c, accept)
 }
 
 case class RecWild(
-    override val children: NodeSet = NodeSet(),
+    override val children: NodeSet = NodeSet.empty,
     override val accept: Option[Boolean] = None)
     extends PolicyNode[RecWild](children, accept) {
   override def cp(c: NodeSet, accept: Option[Boolean] = accept) = copy(c, accept)
@@ -55,7 +56,7 @@ case class RecWild(
 
 case class Named(
     val name: String,
-    override val children: NodeSet = NodeSet(),
+    override val children: NodeSet = NodeSet.empty,
     override val accept: Option[Boolean] = None)
     extends PolicyNode[Named](children, accept) {
   override def cp(c: NodeSet, accept: Option[Boolean] = accept) = copy(name, c, accept)

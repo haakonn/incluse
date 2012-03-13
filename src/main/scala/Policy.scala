@@ -1,6 +1,6 @@
 package net.datapusher.incluse
 
-class Policy private (private val tree: NodeSet = NodeSet()) {
+class Policy private (private val tree: NodeSet = NodeSet.empty) {
 
   import Policy._
 
@@ -21,7 +21,7 @@ class Policy private (private val tree: NodeSet = NodeSet()) {
 
 object Policy {
   
-  def apply(tree: NodeSet = NodeSet()) = new Policy(tree)
+  def apply(tree: NodeSet = NodeSet.empty) = new Policy(tree)
 
   /** Matches a path against a policy.
    *  A return value of Some(true) means the path was included.
