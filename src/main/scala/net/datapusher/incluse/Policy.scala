@@ -15,7 +15,7 @@ class Policy private (private val tree: NodeSet = NodeSet.empty) {
     case _ => false
   }
 
-  override def hashCode = tree.hashCode()
+  override val hashCode = tree.hashCode()
 
 }
 
