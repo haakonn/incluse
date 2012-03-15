@@ -17,7 +17,7 @@ case class NodeSet(
     case n: RecWild => copy(recWild = Some(n))
   }
   
-  def isEmpty = named.isEmpty && wild == None && recWild == None
+  val isEmpty = this == NodeSet.empty
   
 }
 
