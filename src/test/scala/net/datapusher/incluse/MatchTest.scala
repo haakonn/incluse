@@ -1,10 +1,11 @@
 package net.datapusher.incluse
 
+import scala.language.implicitConversions
 import org.scalatest.FunSuite
 
 class MatchTest extends FunSuite {
 
-  implicit def path(p: String) = p split("/") toList
+  implicit def path(p: String) = p.split("/").toList
 
   val pathAbcd = path("a/b/c/d")
 
