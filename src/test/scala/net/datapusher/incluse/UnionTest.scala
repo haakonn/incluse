@@ -5,8 +5,8 @@ import org.scalatest.FunSuite
 class UnionTest extends FunSuite {
 
   private def cancelingPolarity(accept: Boolean, n1: Policy, n2: Policy) = {
-    expect(n1) { n1 union n2 }
-    expect(n1) { n2 union n1 }
+    assertResult(n1) { n1 union n2 }
+    assertResult(n1) { n2 union n1 }
   }
 
   private def simpleCancelingPolarity(accept: Boolean, comp: Policy) =
@@ -16,15 +16,15 @@ class UnionTest extends FunSuite {
     simpleCancelingPolarity(polarity, Policy(NodeSet(wild=Some(Wild(accept=Some(polarity))))))
 
   private def eliminationByRecWild(recWild: Policy, other: Policy) =
-    expect(recWild) { recWild union other }
+    assertResult(recWild) { recWild union other }
 
   test("Union is symmetrical") {
-    expect(Policies.samplePolicy union Policies.smallPolicy) {
+    assertResult(Policies.samplePolicy union Policies.smallPolicy) {
       Policies.smallPolicy union Policies.samplePolicy
     }
   }
 
-  def selfUnion(p: Policy) = expect(p) { p union p }
+  def selfUnion(p: Policy) = assertResult(p) { p union p }
 
   test("Simple self-union") {
     selfUnion(Policies.smallPolicy)
@@ -34,7 +34,7 @@ class UnionTest extends FunSuite {
     selfUnion(Policies.samplePolicy)
   }
 
-  def unionWithEmpty(p: Policy) = expect(p) { p union Policy.empty }
+  def unionWithEmpty(p: Policy) = assertResult(p) { p union Policy.empty }
 
   test("Simple union with empty policy") {
     unionWithEmpty(Policies.smallPolicy)
@@ -45,7 +45,7 @@ class UnionTest extends FunSuite {
   }
 
   test("Union of two unequals") {
-    expect(Policy(NodeSet(Set(Named("a", accept=Some(true)), Named("b", accept=Some(true)))))) {
+    assertResult(Policy(NodeSet(Set(Named("a", accept=Some(true)), Named("b", accept=Some(true)))))) {
       Policies.smallPolicy union Policies.smallPolicy2
     }
   }
@@ -98,7 +98,7 @@ class UnionTest extends FunSuite {
     val p2 = Policy(NodeSet(Set(Named("a",NodeSet(Set(),None,Some(RecWild(NodeSet(Set(),None,None),Some(false)))),None)),None,None))
     // expected = p, p2
     val expected = Policy(NodeSet(Set(Named("a",NodeSet(Set(),Some(Wild(NodeSet(Set(Named("b",NodeSet(Set(),None,None),Some(true))),None,None),None)),Some(RecWild(NodeSet(Set(),None,None),Some(false)))),None)),None,None))
-    expect(expected) {
+    assertResult(expected) {
       p union p2
     }
   }
