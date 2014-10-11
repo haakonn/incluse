@@ -8,7 +8,7 @@ class Policy private (private val tree: NodeSet) {
 
   def union(other: Policy) = new Policy(normalize(merge(tree, other.tree)))
   
-  override def toString = tree toString
+  override def toString = tree.toString
   
   override def equals(that: Any) = that match {
     case p: Policy => tree == p.tree
@@ -92,8 +92,8 @@ object Policy {
     //   if same name exists in s, set l.children = merge(l.children, s.children)
     // for each in s:
     //   if same name does NOT exist in l, add s to l
-    if (n1 isEmpty) n2 // if one of them is empty, pick the one that's not
-    else if (n2 isEmpty) n1 else {
+    if (n1.isEmpty) n2 // if one of them is empty, pick the one that's not
+    else if (n2.isEmpty) n1 else {
       // both are non-empty, an actual merge has to be done:
       val named = merge(n1.named, n2.named)
       val wild = merge(n1.wild, n2.wild)

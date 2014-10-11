@@ -4,12 +4,14 @@ organization := "net.datapusher"
 
 version := "0.1"
 
-scalaVersion := "2.9.1-1"
+scalaVersion := "2.11.2"
 
 scalacOptions += "-unchecked"
 
 scalacOptions += "-deprecation"
 
+scalacOptions += "-feature"
+
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "1.6.1" % "test"
+  "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 )
