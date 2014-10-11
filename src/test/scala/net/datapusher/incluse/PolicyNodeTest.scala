@@ -4,12 +4,12 @@ import org.scalatest.FunSuite
 
 class PolicyNodeTest extends FunSuite {
 
-  private def assertUnequal(n1: PolicyNode[_], n2: PolicyNode[_]) = {
+  private def assertUnequal[A <: PolicyNode[A], B <: PolicyNode[B]](n1: PolicyNode[A], n2: PolicyNode[B]) = {
     assert(!(n1 == n2))
     assert(!(n2 == n1))
   }
 
-  private def assertEqual(n1: PolicyNode[_], n2: PolicyNode[_]) = {
+  private def assertEqual[A <: PolicyNode[A], B <: PolicyNode[B]](n1: PolicyNode[A], n2: PolicyNode[B]) = {
     assert(n1 == n2)
     assert(n2 == n1)
   }
